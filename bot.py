@@ -1,26 +1,13 @@
-```python
 import os
 import telebot
 import json
 from flask import Flask, request
 from telebot import types
 
-# -----------------------------
-# TOKEN
-# -----------------------------
-
 TOKEN = os.environ.get("BOT_TOKEN")
-
-# -----------------------------
-# APP
-# -----------------------------
 
 app = Flask(__name__)
 bot = telebot.TeleBot(TOKEN)
-
-# -----------------------------
-# DATA
-# -----------------------------
 
 clients = {}
 logged_users = {}
@@ -284,7 +271,7 @@ def handle_backup(message):
 
 if __name__ == "__main__":
 
-    RENDER_URL = "آدرس-کامل-رندر-خودت"
+    RENDER_URL = "https://crm-bot.onrender.com"
 
     bot.remove_webhook()
 
@@ -296,4 +283,3 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000))
     )
-```
