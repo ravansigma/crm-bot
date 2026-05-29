@@ -3,7 +3,7 @@ import telebot
 import json
 from flask import Flask, request
 
-TOKEN = "8862296016:AAFDKmHsoMnWdD2D20QYi3BkAknvWPw7i0A"
+TOKEN = os.environ.get('BOT_TOKEN', '8862296016:AAFDKmHsoMnWdD2D20QYi3BkAknvWPw7i0A')
 
 app = Flask(__name__)
 bot = telebot.TeleBot(TOKEN)
@@ -45,5 +45,7 @@ def handle_backup(message):
 
 if __name__ == "__main__":
     bot.remove_webhook()
-    bot.set_webhook(url=os.environ.get('RENDER_EXTERNAL_URL') + f"/{TOKEN}")
+    url = os.environ.get('RENDER_EXTERNAL_URL')
+    if url:
+        bot.set_webhook(url=f"{url}/{TOKEN}")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
