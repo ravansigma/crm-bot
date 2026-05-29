@@ -1,33 +1,52 @@
+```python
 import os
 import telebot
 import json
 from flask import Flask, request
 from telebot import types
 
+# -----------------------------
+# TOKEN
+# -----------------------------
+
 TOKEN = os.environ.get("BOT_TOKEN")
+
+# -----------------------------
+# APP
+# -----------------------------
 
 app = Flask(__name__)
 bot = telebot.TeleBot(TOKEN)
+
+# -----------------------------
+# DATA
+# -----------------------------
 
 clients = {}
 logged_users = {}
 
 # -----------------------------
-# WEBHOOK
+# HOME
 # -----------------------------
 
-@app.route(f"/{TOKEN}", methods=['POST'])
-def webhook():
-    json_str = request.get_json()
-    update = telebot.types.Update.de_json(json_str)
-    bot.process_new_updates([update])
-    return "OK", 200
-
-
-@app.route("/")
+@app.route('/')
 def home():
     return "Bot is running!"
 
+# -----------------------------
+# WEBHOOK
+# -----------------------------
+
+@app.route(f'/{TOKEN}', methods=['POST'])
+def webhook():
+
+    json_str = request.get_json()
+
+    update = telebot.types.Update.de_json(json_str)
+
+    bot.process_new_updates([update])
+
+    return 'OK', 200
 
 # -----------------------------
 # START
@@ -36,47 +55,57 @@ def home():
 @bot.message_handler(commands=['start'])
 def start(message):
 
-    code = message.text.split()[-1] if len(message.text.split()) > 1 else None
+    parts = message.text.split()
 
-    if code and code in clients:
+    if len(parts) < 2:
 
-        client = clients[code]
-
-        logged_users[message.chat.id] = code
-
-        markup = types.ReplyKeyboardMarkup(
-            resize_keyboard=True
+        bot.send_message(
+            message.chat.id,
+            "❌ کد مراجعه وارد نشده\n\n/start کد"
         )
 
-        btn1 = types.KeyboardButton("👤 اطلاعات من")
-        btn2 = types.KeyboardButton("💰 تعرفه جلسه")
-        btn3 = types.KeyboardButton("📞 شماره تماس")
-        btn4 = types.KeyboardButton("📝 یادداشت")
+        return
 
-        markup.add(btn1)
-        markup.add(btn2)
-        markup.add(btn3)
-        markup.add(btn4)
+    code = parts[1]
 
-        text = f"""
+    if code not in clients:
+
+        bot.send_message(
+            message.chat.id,
+            "❌ کد معتبر نیست"
+        )
+
+        return
+
+    client = clients[code]
+
+    logged_users[message.chat.id] = code
+
+    markup = types.ReplyKeyboardMarkup(
+        resize_keyboard=True
+    )
+
+    btn1 = types.KeyboardButton("👤 اطلاعات من")
+    btn2 = types.KeyboardButton("💰 تعرفه جلسه")
+    btn3 = types.KeyboardButton("📞 شماره تماس")
+    btn4 = types.KeyboardButton("📝 یادداشت")
+
+    markup.add(btn1)
+    markup.add(btn2)
+    markup.add(btn3)
+    markup.add(btn4)
+
+    text = f"""
 👋 سلام {client.get('name', '')}
 
 به پنل شخصی خود خوش آمدید.
 """
 
-        bot.send_message(
-            message.chat.id,
-            text,
-            reply_markup=markup
-        )
-
-    else:
-
-        bot.send_message(
-            message.chat.id,
-            "❌ کد معتبر نیست\n\n/start [کد]"
-        )
-
+    bot.send_message(
+        message.chat.id,
+        text,
+        reply_markup=markup
+    )
 
 # -----------------------------
 # INFO
@@ -86,7 +115,12 @@ def start(message):
 def info_handler(message):
 
     if message.chat.id not in logged_users:
-        bot.reply_to(message, "ابتدا وارد شوید")
+
+        bot.reply_to(
+            message,
+            "ابتدا وارد شوید"
+        )
+
         return
 
     code = logged_users[message.chat.id]
@@ -109,16 +143,20 @@ def info_handler(message):
 
     bot.reply_to(message, text)
 
-
 # -----------------------------
-# SESSION PRICE
+# RATE
 # -----------------------------
 
 @bot.message_handler(func=lambda m: m.text == "💰 تعرفه جلسه")
 def rate_handler(message):
 
     if message.chat.id not in logged_users:
-        bot.reply_to(message, "ابتدا وارد شوید")
+
+        bot.reply_to(
+            message,
+            "ابتدا وارد شوید"
+        )
+
         return
 
     code = logged_users[message.chat.id]
@@ -133,7 +171,6 @@ def rate_handler(message):
 
     bot.reply_to(message, text)
 
-
 # -----------------------------
 # PHONE
 # -----------------------------
@@ -142,7 +179,12 @@ def rate_handler(message):
 def phone_handler(message):
 
     if message.chat.id not in logged_users:
-        bot.reply_to(message, "ابتدا وارد شوید")
+
+        bot.reply_to(
+            message,
+            "ابتدا وارد شوید"
+        )
+
         return
 
     code = logged_users[message.chat.id]
@@ -152,13 +194,13 @@ def phone_handler(message):
     phone = client.get("phone", "")
 
     if not phone:
+
         phone = "ثبت نشده"
 
     bot.reply_to(
         message,
         f"📞 شماره تماس:\n{phone}"
     )
-
 
 # -----------------------------
 # NOTES
@@ -168,7 +210,12 @@ def phone_handler(message):
 def notes_handler(message):
 
     if message.chat.id not in logged_users:
-        bot.reply_to(message, "ابتدا وارد شوید")
+
+        bot.reply_to(
+            message,
+            "ابتدا وارد شوید"
+        )
+
         return
 
     code = logged_users[message.chat.id]
@@ -178,6 +225,7 @@ def notes_handler(message):
     notes = client.get("notes", "")
 
     if not notes:
+
         notes = "یادداشتی ثبت نشده"
 
     bot.reply_to(
@@ -185,9 +233,8 @@ def notes_handler(message):
         f"📝 یادداشت:\n{notes}"
     )
 
-
 # -----------------------------
-# JSON BACKUP
+# JSON UPLOAD
 # -----------------------------
 
 @bot.message_handler(content_types=['document'])
@@ -217,7 +264,7 @@ def handle_backup(message):
         bot.reply_to(
             message,
             f"""
-✅ فایل با موفقیت بارگذاری شد
+✅ فایل بارگذاری شد
 
 👥 تعداد مراجعین:
 {len(clients)}
@@ -231,24 +278,22 @@ def handle_backup(message):
             f"❌ خطا:\n{str(e)}"
         )
 
-
 # -----------------------------
 # RUN
 # -----------------------------
 
 if __name__ == "__main__":
 
+    RENDER_URL = "آدرس-کامل-رندر-خودت"
+
     bot.remove_webhook()
 
-    render_url = os.environ.get(
-        "RENDER_EXTERNAL_URL"
-    )
-
     bot.set_webhook(
-        url=f"{render_url}/{TOKEN}"
+        url=f"{RENDER_URL}/{TOKEN}"
     )
 
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000))
     )
+```
